@@ -13,12 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package cmd
 
-import "github.com/zee-ahmed/kubemngr/cmd"
+import (
+	"fmt"
 
-var clientVersion = "0.0.1"
+	"github.com/spf13/cobra"
+)
 
-func main() {
-  cmd.Execute(clientVersion)
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show the kubemngr client version",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(rootCmd.Use + " " + clientVersion)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }
