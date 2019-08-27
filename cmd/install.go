@@ -16,28 +16,24 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
 	"fmt"
-
 	_ "github.com/google/go-github/v27/github"
 	"github.com/spf13/cobra"
+	"io"
+	"log"
+	"net/http"
+	"os"
 )
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("provide a kubectl version")
-	},
+	Short: "A tool manage different kubectl versions inside a workspace.",
+	//RunE: func(cmd *cobra.Command, args []string) error {
+	//	return errors.New("provide a kubectl version")
+	//},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Hello World")
+		DownloadKubectl(args[0])
 	},
 }
 
@@ -53,4 +49,43 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// installCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func DownloadKubectl(arg string) (int, error) {
+	//TODO: Get OS information machine / architecture
+	// Check if version already exists before downloading
+	
+	userInput := arg
+
+	if len(userInput) == 0 {
+		log.Fatal(userInput)
+	}
+
+	fmt.Printf("Downloading kubectl version %s", userInput)
+
+	res, err := http.Get("https://storage.googleapis.com/kubernetes-release/release/" + userInput + "/bin/linux/amd64/kubectl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer res.Body.Close()
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	out, err := os.Create(homeDir + "/.kubemngr/" + userInput)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer out.Close()
+
+	_, err = io.Copy(out, res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Printf("Download Complete")
 }
