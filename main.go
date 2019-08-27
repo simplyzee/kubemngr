@@ -15,10 +15,44 @@ limitations under the License.
 */
 package main
 
-import "github.com/zee-ahmed/kubemngr/cmd"
+import (
+  "fmt"
+  "github.com/zee-ahmed/kubemngr/cmd"
+  "log"
+  "os"
+)
 
 var clientVersion = "0.0.1"
 
 func main() {
+
+  homeDir, err := os.UserHomeDir()
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  directory := homeDir + "/.kubemngr"
+  createDirectory(directory)
+
   cmd.Execute(clientVersion)
+}
+
+
+func createDirectory(dirName string) bool {
+  src, err := os.Stat(dirName)
+
+  if os.IsNotExist(err) {
+    errDir := os.MkdirAll(dirName, 0755)
+    if errDir != nil {
+      panic(err)
+    }
+    return true
+  }
+
+  if src.Mode().IsRegular() {
+    fmt.Println(dirName, "already exist as a file!")
+    return false
+  }
+
+  return false
 }
