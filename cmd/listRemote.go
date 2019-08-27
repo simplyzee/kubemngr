@@ -35,7 +35,7 @@ var listRemoteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		k8s := Kubernetes{}
-		ListAvailableRemotes("https://api.github.com/repos/kubernetes/kubernetes/releases?per_page=100", &k8s)
+		_ = ListAvailableRemotes("https://api.github.com/repos/kubernetes/kubernetes/releases?per_page=100", &k8s)
 
 		for _, element := range k8s {
 			fmt.Println(element.TagName)
