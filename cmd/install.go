@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	_ "github.com/google/go-github/v27/github"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"io"
 	"log"
@@ -27,6 +28,12 @@ import (
 	"syscall"
 )
 
+var sys, machine string
+
+type WriteCounter struct {
+	Total uint64
+}
+
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -35,7 +42,11 @@ var installCmd = &cobra.Command{
 	//	return errors.New("provide a kubectl version")
 	//},
 	Run: func(cmd *cobra.Command, args []string) {
-		_, _ = DownloadKubectl(args[0])
+		err := DownloadKubectl(args[0])
+
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
@@ -53,30 +64,23 @@ func init() {
 	// installCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func arrayToString(x [65]int8) string {
-	var buf [65]byte
-	for i, b := range x {
-		buf[i] = byte(b)
-	}
-	str := string(buf[:])
-	if i := strings.Index(str, "\x00"); i != -1 {
-		str = str[:i]
-	}
-	return str
-}
+func DownloadKubectl(arg string) error {
 
-func DownloadKubectl(arg string) (int, error) {
-	//TODO:
-	// Check if version already exists before downloading
+	filepath := "/tmp/"
 
 	if len(arg) == 0 {
-		log.Fatal(arg)
+		log.Fatal(0)
 	}
 
-	var sys, machine
+	out, err := os.Create(filepath+"kubectl-"+arg+".tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer out.Close()
+
 	uname := GetOSInfo()
 
-	// TODO TIDY ME
 	if arrayToString(uname.Sysname) == "Linux" {
 		sys = "linux"
 	} else if arrayToString(uname.Sysname) == "Darwin" {
@@ -97,35 +101,33 @@ func DownloadKubectl(arg string) (int, error) {
 		fmt.Println("Unknown machine")
 	}
 
-	fmt.Printf("Downloading kubectl version %s", arg)
+	resp, err := http.Get("https://storage.googleapis.com/kubernetes-release/release/" + arg + "/bin" + arrayToString(uname.Sysname) + "/" + arrayToString(uname.Machine) + "/kubectl")
 
-	res, err := http.Get("https://storage.googleapis.com/kubernetes-release/release/" + arg + "/bin/" + arrayToString(uname.Sysname) + "/" + arrayToString(uname.Machine) + "/kubectl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer res.Body.Close()
+	defer resp.Body.Close()
 
-	homeDir, err := os.UserHomeDir()
+	counter := &WriteCounter{}
+	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
+
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	out, err := os.Create(homeDir + "/.kubemngr/" + arg)
+	// The progress use the same line so print a new line once it's finished downloading
+	fmt.Println()
+
+	// Rename the tmp file back to the original file
+	//err = os.Rename(filepath+arg+".tmp", filepath)
+	err = os.Rename(filepath+"kubectl-"+arg+".tmp", filepath+"kubectl-"+arg)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	defer out.Close()
-
-	_, err = io.Copy(out, res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return fmt.Printf("Download Complete")
+	return nil
 }
-
 
 func GetOSInfo() syscall.Utsname {
 	var uname syscall.Utsname
@@ -135,4 +137,34 @@ func GetOSInfo() syscall.Utsname {
 	}
 
 	return uname
+}
+
+func (wc *WriteCounter) Write(p []byte) (int, error) {
+	n := len(p)
+	wc.Total += uint64(n)
+	wc.PrintProgress()
+	return n, nil
+}
+
+func (wc WriteCounter) PrintProgress() {
+	// Clear the line by using a character return to go back to the start and remove
+	// the remaining characters by filling it with spaces
+	fmt.Printf("\r%s", strings.Repeat(" ", 50))
+
+	// Return again and print current status of download
+	// We use the humanize package to print the bytes in a meaningful way (e.g. 10 MB)
+	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
+}
+
+
+func arrayToString(x [65]int8) string {
+	var buf [65]byte
+	for i, b := range x {
+		buf[i] = byte(b)
+	}
+	str := string(buf[:])
+	if i := strings.Index(str, "\x00"); i != -1 {
+		str = str[:i]
+	}
+	return str
 }
