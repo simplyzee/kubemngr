@@ -65,6 +65,7 @@ func init() {
 	// installCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
+//DownloadKubectl - download user specified version of kubectl
 func DownloadKubectl(arg string) error {
 
 	filepath := "/tmp/"
@@ -73,7 +74,20 @@ func DownloadKubectl(arg string) error {
 		log.Fatal(0)
 	}
 
-	// Create temp file of download in tmp directory
+	// Get user home directory path
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Check if current version already exists
+	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + arg)
+	if err == nil {
+		log.Printf("kubectl version %s already exists", arg)
+		return nil
+	}
+
+	// Create temp file of kubectl version in tmp directory
 	out, err := os.Create(filepath + "kubectl-" + arg + ".tmp")
 	if err != nil {
 		log.Fatal(err)
@@ -84,20 +98,20 @@ func DownloadKubectl(arg string) error {
 	// Get OS information to filter download type i.e linux / darwin
 	uname := GetOSInfo()
 
-	if arrayToString(uname.Sysname) == "Linux" {
+	if ArrayToString(uname.Sysname) == "Linux" {
 		sys = "linux"
-	} else if arrayToString(uname.Sysname) == "Darwin" {
+	} else if ArrayToString(uname.Sysname) == "Darwin" {
 		sys = "darwin"
 	} else {
 		sys = "UNKNOWN"
 		fmt.Println("Unknown system")
 	}
 
-	if arrayToString(uname.Machine) == "arm" {
+	if ArrayToString(uname.Machine) == "arm" {
 		machine = "arm"
-	} else if arrayToString(uname.Machine) == "arm64" {
+	} else if ArrayToString(uname.Machine) == "arm64" {
 		machine = "arm64"
-	} else if arrayToString(uname.Machine) == "x86_64" {
+	} else if ArrayToString(uname.Machine) == "x86_64" {
 		machine = "amd64"
 	} else {
 		machine = "UNKNOWN"
@@ -121,12 +135,6 @@ func DownloadKubectl(arg string) error {
 
 	// The progress use the same line so print a new line once it's finished downloading
 	fmt.Println()
-
-	// Get user home directory path
-	// homeDir, err := os.UserHomeDir()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	// TODO Move to kubemngr directory
 	// Rename the tmp file back to the original file and store it in the kubemngr directory
@@ -167,7 +175,7 @@ func (wc WriteCounter) PrintProgress() {
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-func arrayToString(x [65]int8) string {
+func ArrayToString(x [65]int8) string {
 	var buf [65]byte
 	for i, b := range x {
 		buf[i] = byte(b)
