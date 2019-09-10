@@ -17,15 +17,16 @@ package cmd
 
 import (
 	"fmt"
-	_ "github.com/google/go-github/v27/github"
-	"github.com/dustin/go-humanize"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/dustin/go-humanize"
+	_ "github.com/google/go-github/v27/github"
+	"github.com/spf13/cobra"
 )
 
 var sys, machine string
@@ -72,13 +73,15 @@ func DownloadKubectl(arg string) error {
 		log.Fatal(0)
 	}
 
-	out, err := os.Create(filepath+"kubectl-"+arg+".tmp")
+	// Create temp file of download in tmp directory
+	out, err := os.Create(filepath + "kubectl-" + arg + ".tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer out.Close()
 
+	// Get OS information to filter download type i.e linux / darwin
 	uname := GetOSInfo()
 
 	if arrayToString(uname.Sysname) == "Linux" {
@@ -101,8 +104,9 @@ func DownloadKubectl(arg string) error {
 		fmt.Println("Unknown machine")
 	}
 
-	resp, err := http.Get("https://storage.googleapis.com/kubernetes-release/release/" + arg + "/bin" + arrayToString(uname.Sysname) + "/" + arrayToString(uname.Machine) + "/kubectl")
+	url := "https://storage.googleapis.com/kubernetes-release/release/" + arg + "/bin/" + sys + "/" + machine + "/kubectl"
 
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,24 +115,30 @@ func DownloadKubectl(arg string) error {
 
 	counter := &WriteCounter{}
 	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
-
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	// The progress use the same line so print a new line once it's finished downloading
 	fmt.Println()
 
-	// Rename the tmp file back to the original file
-	//err = os.Rename(filepath+arg+".tmp", filepath)
+	// Get user home directory path
+	// homeDir, err := os.UserHomeDir()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// TODO Move to kubemngr directory
+	// Rename the tmp file back to the original file and store it in the kubemngr directory
 	err = os.Rename(filepath+"kubectl-"+arg+".tmp", filepath+"kubectl-"+arg)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	return nil
 }
 
+// GetOSInfo - Get operating system information of machine
 func GetOSInfo() syscall.Utsname {
 	var uname syscall.Utsname
 
@@ -146,6 +156,7 @@ func (wc *WriteCounter) Write(p []byte) (int, error) {
 	return n, nil
 }
 
+// PrintProgress - Helper function to print progress of a download
 func (wc WriteCounter) PrintProgress() {
 	// Clear the line by using a character return to go back to the start and remove
 	// the remaining characters by filling it with spaces
@@ -155,7 +166,6 @@ func (wc WriteCounter) PrintProgress() {
 	// We use the humanize package to print the bytes in a meaningful way (e.g. 10 MB)
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
-
 
 func arrayToString(x [65]int8) string {
 	var buf [65]byte
