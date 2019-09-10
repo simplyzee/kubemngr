@@ -75,17 +75,17 @@ func DownloadKubectl(arg string) error {
 	}
 
 	// Get user home directory path
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// homeDir, err := os.UserHomeDir()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// Check if current version already exists
-	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + arg)
-	if err == nil {
-		log.Printf("kubectl version %s already exists", arg)
-		return nil
-	}
+	// _, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + arg)
+	// if err == nil {
+	// 	log.Printf("kubectl version %s already exists", arg)
+	// 	return nil
+	// }
 
 	// Create temp file of kubectl version in tmp directory
 	out, err := os.Create(filepath + "kubectl-" + arg + ".tmp")
@@ -127,6 +127,7 @@ func DownloadKubectl(arg string) error {
 
 	defer resp.Body.Close()
 
+	// Initialise WriteCounter and copy the contents of the response body to the tmp file
 	counter := &WriteCounter{}
 	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
 	if err != nil {
@@ -135,6 +136,11 @@ func DownloadKubectl(arg string) error {
 
 	// The progress use the same line so print a new line once it's finished downloading
 	fmt.Println()
+
+	// Set executable permissions on the kubectl binary
+	if err := os.Chmod(filepath+"kubectl-"+arg+".tmp", 755); err != nil {
+		log.Fatal(err)
+	}
 
 	// TODO Move to kubemngr directory
 	// Rename the tmp file back to the original file and store it in the kubemngr directory
