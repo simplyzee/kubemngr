@@ -68,27 +68,29 @@ func init() {
 //DownloadKubectl - download user specified version of kubectl
 func DownloadKubectl(arg string) error {
 
-	filepath := "/tmp/"
+	// TODO use tmp directory to download instead of kubemngr.
+	// This was failing originally with the error: invalid cross-link device
+	// filepath := "/tmp/"
 
 	if len(arg) == 0 {
 		log.Fatal(0)
 	}
 
 	// Get user home directory path
-	// homeDir, err := os.UserHomeDir()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Check if current version already exists
-	// _, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + arg)
-	// if err == nil {
-	// 	log.Printf("kubectl version %s already exists", arg)
-	// 	return nil
-	// }
+	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + arg)
+	if err == nil {
+		log.Printf("kubectl version %s already exists", arg)
+		return nil
+	}
 
 	// Create temp file of kubectl version in tmp directory
-	out, err := os.Create(filepath + "kubectl-" + arg + ".tmp")
+	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + arg + ".tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -138,13 +140,15 @@ func DownloadKubectl(arg string) error {
 	fmt.Println()
 
 	// Set executable permissions on the kubectl binary
-	if err := os.Chmod(filepath+"kubectl-"+arg+".tmp", 755); err != nil {
+	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+arg+".tmp", 0755); err != nil {
 		log.Fatal(err)
 	}
 
-	// TODO Move to kubemngr directory
 	// Rename the tmp file back to the original file and store it in the kubemngr directory
-	err = os.Rename(filepath+"kubectl-"+arg+".tmp", filepath+"kubectl-"+arg)
+	currentFilePath := homeDir + "/.kubemngr/kubectl-" + arg + ".tmp"
+	newFilePath := homeDir + "/.kubemngr/kubectl-" + arg
+
+	err = os.Rename(currentFilePath, newFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
