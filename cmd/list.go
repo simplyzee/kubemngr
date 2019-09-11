@@ -55,11 +55,14 @@ func ListKubectlBinaries() error {
 		log.Fatal(err)
 	}
 
+	// Read kubemngr directory
 	kubectl, err := ioutil.ReadDir(homeDir + "/.kubemngr/")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// TODO sort and filter version for pretty print on version
+	// iterate and print files inside the kubemngr directory
 	for _, files := range kubectl {
 		file := files.Name()
 		// version := file[:strings.IndexByte(file, '-')]
