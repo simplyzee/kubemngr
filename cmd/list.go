@@ -17,6 +17,9 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -24,15 +27,9 @@ import (
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "List downloaded kubectl binaries",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		_ = ListKubectlBinaries()
 	},
 }
 
@@ -48,4 +45,26 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func ListKubectlBinaries() error {
+
+	// Get user home directory path
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	kubectl, err := ioutil.ReadDir(homeDir + "/.kubemngr/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, files := range kubectl {
+		file := files.Name()
+		// version := file[:strings.IndexByte(file, '-')]
+		fmt.Println(file)
+	}
+
+	return nil
 }

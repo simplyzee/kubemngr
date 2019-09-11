@@ -100,6 +100,7 @@ func DownloadKubectl(arg string) error {
 	// Get OS information to filter download type i.e linux / darwin
 	uname := GetOSInfo()
 
+	// TODO refactor me
 	if ArrayToString(uname.Sysname) == "Linux" {
 		sys = "linux"
 	} else if ArrayToString(uname.Sysname) == "Darwin" {
