@@ -72,6 +72,7 @@ func DownloadKubectl(arg string) error {
 	// This was failing originally with the error: invalid cross-link device
 	// filepath := "/tmp/"
 
+	// TODO better sanity check for checking arg is valid
 	if len(arg) == 0 {
 		log.Fatal(0)
 	}
@@ -101,6 +102,7 @@ func DownloadKubectl(arg string) error {
 	uname := GetOSInfo()
 
 	// TODO refactor me
+	// doesn't work on OSX
 	if ArrayToString(uname.Sysname) == "Linux" {
 		sys = "linux"
 	} else if ArrayToString(uname.Sysname) == "Darwin" {
