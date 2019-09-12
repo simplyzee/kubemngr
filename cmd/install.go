@@ -66,14 +66,14 @@ func init() {
 }
 
 //DownloadKubectl - download user specified version of kubectl
-func DownloadKubectl(arg string) error {
+func DownloadKubectl(version string) error {
 
 	// TODO use tmp directory to download instead of kubemngr.
 	// This was failing originally with the error: invalid cross-link device
 	// filepath := "/tmp/"
 
 	// TODO better sanity check for checking arg is valid
-	if len(arg) == 0 {
+	if len(version) == 0 {
 		log.Fatal(0)
 	}
 
@@ -84,14 +84,14 @@ func DownloadKubectl(arg string) error {
 	}
 
 	// Check if current version already exists
-	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + arg)
+	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + version)
 	if err == nil {
-		log.Printf("kubectl version %s already exists", arg)
+		log.Printf("kubectl version %s already exists", version)
 		return nil
 	}
 
 	// Create temp file of kubectl version in tmp directory
-	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + arg + ".tmp")
+	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + version + ".tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func DownloadKubectl(arg string) error {
 		fmt.Println("Unknown machine")
 	}
 
-	url := "https://storage.googleapis.com/kubernetes-release/release/" + arg + "/bin/" + sys + "/" + machine + "/kubectl"
+	url := "https://storage.googleapis.com/kubernetes-release/release/" + version + "/bin/" + sys + "/" + machine + "/kubectl"
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -143,13 +143,13 @@ func DownloadKubectl(arg string) error {
 	fmt.Println()
 
 	// Set executable permissions on the kubectl binary
-	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+arg+".tmp", 0755); err != nil {
+	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+version+".tmp", 0755); err != nil {
 		log.Fatal(err)
 	}
 
 	// Rename the tmp file back to the original file and store it in the kubemngr directory
-	currentFilePath := homeDir + "/.kubemngr/kubectl-" + arg + ".tmp"
-	newFilePath := homeDir + "/.kubemngr/kubectl-" + arg
+	currentFilePath := homeDir + "/.kubemngr/kubectl-" + version + ".tmp"
+	newFilePath := homeDir + "/.kubemngr/kubectl-" + version
 
 	err = os.Rename(currentFilePath, newFilePath)
 	if err != nil {
