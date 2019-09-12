@@ -62,7 +62,6 @@ func ListKubectlBinaries() error {
 		log.Fatal(err)
 	}
 
-	// TODO sort and filter version for pretty print on version
 	// iterate and print files inside the kubemngr directory
 	for _, files := range kubectl {
 		file := files.Name()
