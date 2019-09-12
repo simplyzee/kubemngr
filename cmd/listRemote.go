@@ -18,10 +18,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 type Kubernetes []struct {
@@ -34,15 +36,22 @@ var listRemoteCmd = &cobra.Command{
 	Short: "List available remote kubectl versions to download and install",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		fmt.Println("Getting available list of kubectl versions to install")
+
 		k8s := Kubernetes{}
 		_ = ListAvailableRemotes("https://api.github.com/repos/kubernetes/kubernetes/releases?per_page=100", &k8s)
 
-		for _, element := range k8s {
-			fmt.Println(element.TagName)
+		for _, releases := range k8s {
+			version := releases.TagName
+
+			// filter out  alpha and release candidatest and only show stable releases
+			filterStable := strings.NewReplacer("-rc.1", "", "-beta.2", "", "-beta.1", "", "-alpha.3", "", "-alpha.2", "", "-alpha.1", "", "-rc.2", "", "-rc.3", "")
+			stable := filterStable.Replace(version)
+
+			fmt.Println(stable)
 		}
 	},
 }
-
 
 func init() {
 	rootCmd.AddCommand(listRemoteCmd)
