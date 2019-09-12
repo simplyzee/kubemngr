@@ -30,7 +30,12 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List downloaded kubectl binaries",
 	Run: func(cmd *cobra.Command, args []string) {
-		_ = ListKubectlBinaries()
+		fmt.Println("Retrieving installed versions of kubectl")
+
+		err := ListKubectlBinaries()
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
@@ -48,6 +53,7 @@ func init() {
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
+// ListKubectlBinaries - List available installed kubectl versions
 func ListKubectlBinaries() error {
 
 	// Get user home directory path
