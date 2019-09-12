@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -65,8 +66,8 @@ func ListKubectlBinaries() error {
 	// iterate and print files inside the kubemngr directory
 	for _, files := range kubectl {
 		file := files.Name()
-		// version := file[:strings.IndexByte(file, '-')]
-		fmt.Println(file)
+		version := strings.Replace(file, "kubectl-", "", -1)
+		fmt.Println(version)
 	}
 
 	return nil
