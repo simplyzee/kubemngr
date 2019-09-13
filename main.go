@@ -35,6 +35,9 @@ func main() {
 	directory := homeDir + "/.kubemngr"
 	createDirectory(directory)
 
+	binDirectory := homeDir + "/.local/bin"
+	createDirectory(binDirectory)
+
 	cmd.Execute(clientVersion)
 }
 

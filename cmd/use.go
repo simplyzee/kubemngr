@@ -17,6 +17,8 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -26,7 +28,10 @@ var useCmd = &cobra.Command{
 	Use:   "use",
 	Short: "Use a specific version of one of the downloaded kubectl binaries",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("use called")
+		err := UseKubectlBinary(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
@@ -44,6 +49,27 @@ func init() {
 	// useCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// func UseKubectlBinary(arg string) error {
-// 	return nil
-// }
+// UseKubectlBinary - sets kubectl to the version specified
+func UseKubectlBinary(version string) error {
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	kubectlVersion := homeDir + "/.kubemngr/kubectl-" + version
+	kubectlLink := homeDir + "/.local/bin/kubectl"
+
+	if _, err := os.Lstat(kubectlLink); err == nil {
+		os.Remove(kubectlLink)
+	}
+
+	err = os.Symlink(kubectlVersion, kubectlLink)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("kubectl version set to %s", version)
+
+	return nil
+}
