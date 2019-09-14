@@ -1,3 +1,5 @@
+// +build linux
+
 /*
 Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
@@ -17,22 +19,18 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List downloaded kubectl binaries",
+// removeCmd represents the remove command
+var removeCmd = &cobra.Command{
+	Use:   "remove",
+	Short: "Remove a kubectl version from machine",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Retrieving installed versions of kubectl")
-
-		err := ListKubectlBinaries()
+		err := RemoveKubectlVersion(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -40,40 +38,37 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(removeCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// removeCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// removeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// ListKubectlBinaries - List available installed kubectl versions
-func ListKubectlBinaries() error {
-
+// RemoveKubectlVersion - removes specific kubectl version from machine
+func RemoveKubectlVersion(version string) error {
 	// Get user home directory path
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Read kubemngr directory
-	kubectl, err := ioutil.ReadDir(homeDir + "/.kubemngr/")
-	if err != nil {
-		log.Fatal(err)
-	}
+	kubectlVersion := homeDir + "/.kubemngr/kubectl-" + version
 
-	// iterate and print files inside the kubemngr directory
-	for _, files := range kubectl {
-		file := files.Name()
-		version := strings.Replace(file, "kubectl-", "", -1)
-		fmt.Println(version)
+	// Check if version exists to remove it
+	_, err = os.Stat(kubectlVersion)
+	if err == nil {
+		fmt.Printf("Removing kubectl %s", version)
+		os.Remove(kubectlVersion)
+		return nil
+	} else {
+		fmt.Printf("kubectl version %s doesn't exist", version)
+		return nil
 	}
-
-	return nil
 }

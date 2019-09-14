@@ -1,3 +1,5 @@
+// +build darwin
+
 /*
 Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
@@ -23,12 +25,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// useCmd represents the use command
-var useCmd = &cobra.Command{
-	Use:   "use",
-	Short: "Use a specific version of one of the downloaded kubectl binaries",
+// removeCmd represents the remove command
+var removeCmd = &cobra.Command{
+	Use:   "remove",
+	Short: "Remove a kubectl version from machine",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := UseKubectlBinary(args[0])
+		err := RemoveKubectlVersion(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -36,40 +38,37 @@ var useCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(useCmd)
+	rootCmd.AddCommand(removeCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// useCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// removeCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// useCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// removeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// UseKubectlBinary - sets kubectl to the version specified
-func UseKubectlBinary(version string) error {
-
+// RemoveKubectlVersion - removes specific kubectl version from machine
+func RemoveKubectlVersion(version string) error {
+	// Get user home directory path
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	kubectlVersion := homeDir + "/.kubemngr/kubectl-" + version
-	kubectlLink := homeDir + "/.local/bin/kubectl"
 
-	if _, err := os.Lstat(kubectlLink); err == nil {
-		os.Remove(kubectlLink)
+	// Check if version exists to remove it
+	_, err = os.Stat(kubectlVersion)
+	if err == nil {
+		fmt.Printf("Removing kubectl %s", version)
+		os.Remove(kubectlVersion)
+		return nil
+	} else {
+		fmt.Printf("kubectl version %s doesn't exist", version)
+		return nil
 	}
-
-	err = os.Symlink(kubectlVersion, kubectlLink)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("kubectl version set to %s", version)
-
-	return nil
 }

@@ -1,3 +1,5 @@
+// +build darwin
+
 /*
 Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
