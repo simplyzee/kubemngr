@@ -1,4 +1,4 @@
-// +build darwin
+// +build linux
 
 /*
 Copyright © 2019 Zee Ahmed <zee@simplyzee.dev>
@@ -61,6 +61,12 @@ func UseKubectlBinary(version string) error {
 
 	kubectlVersion := homeDir + "/.kubemngr/kubectl-" + version
 	kubectlLink := homeDir + "/.local/bin/kubectl"
+
+	_, err = os.Stat(kubectlVersion)
+	if os.IsNotExist(err) {
+		log.Printf("kubectl %s does not exist", version)
+		os.Exit(1)
+	}
 
 	if _, err := os.Lstat(kubectlLink); err == nil {
 		os.Remove(kubectlLink)
