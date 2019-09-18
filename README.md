@@ -1,6 +1,6 @@
 # kubemngr
 
-[![Releases](https://img.shields.io/github/release/zee-ahmed/kubemngr.svg?style=flat-square)](https://github.com/zee-ahmed/kubemngr/releases/latest) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](/LICENSE) <!-- [![SayThanks.io]()] --> [![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg?style=flat-square)](https://github.com/goreleaser)
+[![Releases](https://img.shields.io/github/release/zee-ahmed/kubemngr.svg?style=flat-square)](https://github.com/zee-ahmed/kubemngr/releases/latest) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](/LICENSE) <!-- [![SayThanks.io]()] --> [![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg?style=flat-square)](https://github.com/goreleaser)[![Travis](https://img.shields.io/travis/zee-ahmed/kubemngr/master.svg?style=flat-square)](https://travis-ci.org/zee-ahmed/kubemngr)
 
 ## Introduction
 
