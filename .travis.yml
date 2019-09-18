@@ -4,7 +4,8 @@ env:
   - GO111MODULE=on
 install:
   - make setup
-  - make build
+script:
+  - make ci
 deploy:
   - provider: script
     skip_cleanup: true

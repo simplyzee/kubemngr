@@ -24,10 +24,18 @@ default: build
 all: clean build_all install
 
 setup:
-	go mod download
+	go mod tidy
+
+go-mod-tidy:
+	@go mod tidy -v
+	@git diff HEAD
+	@git diff-index --quiet HEAD
+.PHONY: go-mod-tidy
+
+ci: build go-mod-tidy
 
 build:
-	go build ${LDFLAGS} -o ${BINARY}
+	go build
 
 build_all:
 	$(foreach GOOS, $(PLATFORMS),\
