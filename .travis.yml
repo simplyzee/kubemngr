@@ -3,7 +3,7 @@ go: '1.13.x'
 env:
   - GO111MODULE=on
 install:
-  - go mod download
+  - make setup
   - make build
 deploy:
   - provider: script

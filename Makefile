@@ -23,6 +23,9 @@ default: build
 
 all: clean build_all install
 
+setup:
+	go mod download
+
 build:
 	go build ${LDFLAGS} -o ${BINARY}
 
