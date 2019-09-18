@@ -106,8 +106,7 @@ func DownloadKubectl(version string) error {
 	// Get OS information to filter download type i.e linux / darwin
 	uname := GetOSInfo()
 
-	// TODO refactor me
-	// doesn't work on OSX
+	// Compare system name to set value for building url to download kubectl binary
 	if ArrayToString(uname.Sysname) == "Linux" {
 		sys = "linux"
 	} else if ArrayToString(uname.Sysname) == "Darwin" {
