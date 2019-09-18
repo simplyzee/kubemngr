@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/dustin/go-humanize v1.0.0
-	github.com/google/go-github/v27 v27.0.6
 	github.com/h2non/filetype v1.0.10
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
@@ -13,8 +12,6 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.4.0
-	github.com/valyala/fastjson v1.4.1
-	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7 // indirect
 	golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7
 	golang.org/x/text v0.3.2 // indirect
 )
