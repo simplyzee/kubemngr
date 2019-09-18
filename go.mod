@@ -14,6 +14,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/valyala/fastjson v1.4.1
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7 // indirect
-	golang.org/x/sys v0.0.0-20190910064555-bbd175535a8b // indirect
+	golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7
 	golang.org/x/text v0.3.2 // indirect
 )

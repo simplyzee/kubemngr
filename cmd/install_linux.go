@@ -24,10 +24,11 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/dustin/go-humanize"
-	_ "github.com/google/go-github/v27/github"
+	"golang.org/x/sys/unix"
+
+	// _ "github.com/google/go-github/v27/github"
 	"github.com/spf13/cobra"
 )
 
@@ -162,10 +163,10 @@ func DownloadKubectl(version string) error {
 }
 
 // GetOSInfo - Get operating system information of machine
-func GetOSInfo() syscall.Utsname {
-	var uname syscall.Utsname
+func GetOSInfo() unix.Utsname {
+	var uname unix.Utsname
 
-	if err := syscall.Uname(&uname); err != nil {
+	if err := unix.Uname(&uname); err != nil {
 		fmt.Printf("Uname: %v", err)
 	}
 
@@ -190,7 +191,7 @@ func (wc WriteCounter) PrintProgress() {
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-func ArrayToString(x [65]int8) string {
+func ArrayToString(x [65]byte) string {
 	var buf [65]byte
 	for i, b := range x {
 		buf[i] = byte(b)
