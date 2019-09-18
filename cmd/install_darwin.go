@@ -1,4 +1,4 @@
-// +build darwin
+// +build linux
 
 /*
 Copyright © 2019 Zee Ahmed <zee@simplyzee.dev>
@@ -20,16 +20,16 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	"golang.org/x/sys/unix"
-
-	// _ "github.com/google/go-github/v27/github"
+	"github.com/h2non/filetype"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 )
 
 var sys, machine string
@@ -42,14 +42,16 @@ type WriteCounter struct {
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "A tool manage different kubectl versions inside a workspace.",
-	//RunE: func(cmd *cobra.Command, args []string) error {
-	//	return errors.New("provide a kubectl version")
-	//},
 	Run: func(cmd *cobra.Command, args []string) {
-		err := DownloadKubectl(args[0])
+		if len(args) > 0 {
+			err := DownloadKubectl(args[0])
 
-		if err != nil {
-			log.Fatal(err)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		} else {
+			fmt.Println("specify a kubectl version to install")
 		}
 	},
 }
@@ -94,7 +96,7 @@ func DownloadKubectl(version string) error {
 	}
 
 	// Create temp file of kubectl version in tmp directory
-	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + version + ".tmp")
+	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + version)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -145,13 +147,23 @@ func DownloadKubectl(version string) error {
 	// The progress use the same line so print a new line once it's finished downloading
 	fmt.Println()
 
+	// Check to make sure the file is a binary before moving the contents over to the user's home dir
+	buf, _ := ioutil.ReadFile(homeDir + "/.kubemngr/kubectl-" + version)
+
+	// elf - application/x-executable check
+	if !filetype.IsArchive(buf) {
+		fmt.Println("failed to download kubectl file. Are you sure you specified the right version?")
+		os.Remove(homeDir + "/.kubemngr/kubectl-" + version)
+		os.Exit(1)
+	}
+
 	// Set executable permissions on the kubectl binary
-	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+version+".tmp", 0755); err != nil {
+	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+version, 0755); err != nil {
 		log.Fatal(err)
 	}
 
 	// Rename the tmp file back to the original file and store it in the kubemngr directory
-	currentFilePath := homeDir + "/.kubemngr/kubectl-" + version + ".tmp"
+	currentFilePath := homeDir + "/.kubemngr/kubectl-" + version
 	newFilePath := homeDir + "/.kubemngr/kubectl-" + version
 
 	err = os.Rename(currentFilePath, newFilePath)
@@ -191,8 +203,8 @@ func (wc WriteCounter) PrintProgress() {
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-func ArrayToString(x [256]byte) string {
-	var buf [256]byte
+func ArrayToString(x [65]byte) string {
+	var buf [65]byte
 	for i, b := range x {
 		buf[i] = byte(b)
 	}
