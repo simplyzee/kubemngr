@@ -1,17 +1,22 @@
 before:
   hooks:
   - go mod download
-
 builds:
--
-  goos:
-    - linux
-    - darwin
-  goarch:
-    - 386
-    - amd64
-    - arm
-    - arm64
-  goarm:
-    - 6
-    - 7
+- env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+archives:
+  - id: kubemngr
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      386: i386
+      amd64: x86_64
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
