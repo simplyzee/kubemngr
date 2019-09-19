@@ -24,7 +24,7 @@ default: build
 all: clean build_all install
 
 setup:
-	go mod tidy
+	go mod download
 
 go-mod-tidy:
 	@go mod tidy -v
@@ -32,7 +32,7 @@ go-mod-tidy:
 	@git diff-index --quiet HEAD
 .PHONY: go-mod-tidy
 
-ci: build go-mod-tidy
+ci: go-mod-tidy
 
 build:
 	go build
