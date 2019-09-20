@@ -61,7 +61,7 @@ func (kc *kubectlVersion) UnmarshalJSON(b []byte) error {
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List downloaded kubectl binaries",
+	Short: "List installed kubectl binary versions. For available versions, see --remote",
 	Run: func(cmd *cobra.Command, args []string) {
 		var versions []kubectlVersion
 		if remote {
