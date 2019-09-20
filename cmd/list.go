@@ -23,7 +23,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -37,7 +39,8 @@ var (
 )
 
 type kubectlVersion struct {
-	TagName string `json:"tag_name"`
+	TagName     string    `json:"tag_name"`
+	PublishedAt time.Time `json:"published_at"`
 }
 
 var listCmd = &cobra.Command{
@@ -58,21 +61,11 @@ var listCmd = &cobra.Command{
 			}
 		}
 
+		re := regexp.MustCompile(`-rc.1|-beta.2|-beta.1|-alpha.3|-alpha.2|-alpha.1|-rc.2|-rc.3`)
 		for _, version := range versions {
-			// only show stable releases
-			filterStable := strings.NewReplacer(
-				"-rc.1", "",
-				"-beta.2", "",
-				"-beta.1", "",
-				"-alpha.3", "",
-				"-alpha.2", "",
-				"-alpha.1", "",
-				"-rc.2", "",
-				"-rc.3", "",
-			)
-			stable := filterStable.Replace(version.TagName)
-
-			fmt.Println(stable)
+			if !re.MatchString(version.TagName) {
+				fmt.Println(version.TagName)
+			}
 		}
 	},
 }
