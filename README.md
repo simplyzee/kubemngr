@@ -4,7 +4,7 @@
 
 ## Introduction
 
-kubemngr is an cli tool to manage kubectl binaries for developers who work with different versions of Kubernetes clusters within their environments. This way the developer can keep in sync with the kubernetes cluster version. This tool was written in Golang using [Cobra](https://github.com/spf13/cobra)
+kubemngr is a cli tool to manage kubectl binaries for developers who work with different versions of Kubernetes clusters within their environments. This way the developer can keep in sync with the kubernetes cluster version. This tool was written in Golang using [Cobra](https://github.com/spf13/cobra)
 
 ## Install
 
@@ -26,8 +26,7 @@ Usage:
 Available Commands:
   help        Help about any command
   install     A tool manage different kubectl versions inside a workspace.
-  list        List downloaded kubectl binaries
-  listRemote  List available remote kubectl versions to download and install
+  list        List installed kubectl binary versions. For available versions, see --remote
   remove      Remove a kubectl version from machine
   use         Use a specific version of one of the downloaded kubectl binaries
   version     Show the kubemngr client version
