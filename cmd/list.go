@@ -44,13 +44,9 @@ type kubectlVersion struct {
 }
 
 func (kc *kubectlVersion) UnmarshalJSON(b []byte) error {
-	type alias kubectlVersion
 	aux := &struct {
 		TagName string `json:"tag_name"`
-		*alias
-	}{
-		alias: (*alias)(kc),
-	}
+	}{}
 
 	if err := json.Unmarshal(b, &aux); err != nil {
 		log.Fatal(err)
