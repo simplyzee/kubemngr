@@ -24,9 +24,11 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 )
 
@@ -39,8 +41,28 @@ var (
 )
 
 type kubectlVersion struct {
-	TagName     string    `json:"tag_name"`
+	TagName     version.Version
 	PublishedAt time.Time `json:"published_at"`
+}
+
+func (kc *kubectlVersion) UnmarshalJSON(b []byte) error {
+	type alias kubectlVersion
+	aux := &struct {
+		TagName string `json:"tag_name"`
+		*alias
+	}{
+		alias: (*alias)(kc),
+	}
+
+	if err := json.Unmarshal(b, &aux); err != nil {
+		log.Fatal(err)
+	}
+	version, err := version.NewVersion(aux.TagName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	kc.TagName = *version
+	return nil
 }
 
 var listCmd = &cobra.Command{
@@ -63,8 +85,8 @@ var listCmd = &cobra.Command{
 
 		re := regexp.MustCompile(`-rc.1|-beta.2|-beta.1|-alpha.3|-alpha.2|-alpha.1|-rc.2|-rc.3`)
 		for _, version := range versions {
-			if !re.MatchString(version.TagName) {
-				fmt.Println(version.TagName)
+			if !re.MatchString(version.TagName.String()) {
+				fmt.Println(version.TagName.Original())
 			}
 		}
 	},
@@ -90,8 +112,11 @@ func fetchLocalVersions() []kubectlVersion {
 	list := []kubectlVersion{}
 	for _, files := range kubectl {
 		file := files.Name()
-		version := strings.Replace(file, "kubectl-", "", -1)
-		list = append(list, kubectlVersion{TagName: version})
+		name, err := version.NewVersion(strings.Replace(file, "kubectl-", "", -1))
+		if err != nil {
+			log.Fatal(err)
+		}
+		list = append(list, kubectlVersion{TagName: *name})
 	}
 
 	return list
@@ -115,6 +140,10 @@ func fetchRemoteVersions() []kubectlVersion {
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].TagName.GreaterThan(&list[j].TagName)
+	})
 
 	return list
 }
