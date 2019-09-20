@@ -26,7 +26,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
@@ -41,8 +40,7 @@ var (
 )
 
 type kubectlVersion struct {
-	TagName     version.Version
-	PublishedAt time.Time `json:"published_at"`
+	Version version.Version
 }
 
 func (kc *kubectlVersion) UnmarshalJSON(b []byte) error {
@@ -61,7 +59,7 @@ func (kc *kubectlVersion) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	kc.TagName = *version
+	kc.Version = *version
 	return nil
 }
 
@@ -85,8 +83,8 @@ var listCmd = &cobra.Command{
 
 		re := regexp.MustCompile(`-rc.1|-beta.2|-beta.1|-alpha.3|-alpha.2|-alpha.1|-rc.2|-rc.3`)
 		for _, version := range versions {
-			if !re.MatchString(version.TagName.String()) {
-				fmt.Println(version.TagName.Original())
+			if !re.MatchString(version.Version.String()) {
+				fmt.Println(version.Version.Original())
 			}
 		}
 	},
@@ -116,7 +114,7 @@ func fetchLocalVersions() []kubectlVersion {
 		if err != nil {
 			log.Fatal(err)
 		}
-		list = append(list, kubectlVersion{TagName: *name})
+		list = append(list, kubectlVersion{Version: *name})
 	}
 
 	return list
@@ -142,7 +140,7 @@ func fetchRemoteVersions() []kubectlVersion {
 	}
 
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].TagName.GreaterThan(&list[j].TagName)
+		return list[i].Version.GreaterThan(&list[j].Version)
 	})
 
 	return list
