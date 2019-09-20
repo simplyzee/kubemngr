@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/h2non/filetype v1.0.10
+	github.com/hashicorp/go-version v1.2.0
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pelletier/go-toml v1.4.0 // indirect
