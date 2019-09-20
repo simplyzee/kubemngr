@@ -6,6 +6,15 @@
 
 kubemngr is a cli tool to manage kubectl binaries for developers who work with different versions of Kubernetes clusters within their environments. This way the developer can keep in sync with the kubernetes cluster version. This tool was written in Golang using [Cobra](https://github.com/spf13/cobra)
 
+99% of the case - developers will not have a problem using `kubectl` across different versions of k8s clusters with api requests for getting pods, ingress and services etc. However, there is the small chance that some requests will return with:
+
+```bash
+> kubectl describe ing <name>
+Error from server (NotFound): the server could not find the requested resource
+```
+
+This tool was written based on this experience and for learning opportunities/experiences.
+
 ## Install
 
 via Go:
