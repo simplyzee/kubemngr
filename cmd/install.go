@@ -71,7 +71,8 @@ func DownloadKubectl(version string) error {
 
 	// Check if current version already exists
 	if _, err = os.Stat(kubectl); err == nil {
-		log.Fatalf("%s is already installed.", version)
+		fmt.Printf("%s is already installed.", version)
+		os.Exit(0)
 	}
 
 	// Create temp file of kubectl version in tmp directory
@@ -84,10 +85,12 @@ func DownloadKubectl(version string) error {
 	uname := getOSInfo()
 	// Compare system name to set value for building url to download kubectl binary
 	if uname.Sysname != "Linux" && uname.Sysname != "Darwin" {
-		log.Fatalf("Unsupported OS: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Sysname)
+		fmt.Printf("Unsupported OS: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Sysname)
+		os.Exit(0)
 	}
 	if uname.Machine != "arm" && uname.Machine != "arm64" && uname.Machine != "x86_64" {
-		log.Fatalf("Unsupported arch: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Machine)
+		fmt.Printf("Unsupported arch: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Machine)
+		os.Exit(0)
 	}
 
 	var sys = strings.ToLower(uname.Sysname)
