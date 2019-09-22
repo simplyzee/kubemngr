@@ -4,10 +4,8 @@ go 1.12
 
 require (
 	github.com/cheggaaa/pb v1.0.27
-	github.com/dustin/go-humanize v1.0.0
 	github.com/gabriel-vasile/mimetype v0.3.18
-	github.com/h2non/filetype v1.0.10
-	github.com/hashicorp/go-cleanhttp v0.5.1
+	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/magiconair/properties v1.8.1 // indirect
