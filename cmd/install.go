@@ -19,41 +19,15 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
-	"github.com/dustin/go-humanize"
-	"github.com/h2non/filetype"
+	"github.com/gabriel-vasile/mimetype"
+	getter "github.com/hashicorp/go-getter"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 )
-
-// WriteCounter tracks the total number of bytes
-type WriteCounter struct {
-	Total uint64
-}
-
-func (wc *WriteCounter) Write(p []byte) (int, error) {
-	n := len(p)
-	wc.Total += uint64(n)
-	wc.PrintProgress()
-	return n, nil
-}
-
-// PrintProgress - Helper function to print progress of a download
-func (wc WriteCounter) PrintProgress() {
-	// Clear the line by using a character return to go back to the start and remove
-	// the remaining characters by filling it with spaces
-	fmt.Printf("\r%s", strings.Repeat(" ", 50))
-
-	// Return again and print current status of download
-	// We use the humanize package to print the bytes in a meaningful way (e.g. 10 MB)
-	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
-}
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
@@ -93,23 +67,21 @@ func DownloadKubectl(version string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	kubectl := fmt.Sprintf("%v/.kubemngr/kubectl-%v", homeDir, version)
 
 	// Check if current version already exists
-	if _, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + version); err == nil {
+	if _, err = os.Stat(kubectl); err == nil {
 		log.Fatalf("%s is already installed.", version)
 	}
 
 	// Create temp file of kubectl version in tmp directory
-	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + version)
+	out, err := os.Create(kubectl)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer out.Close()
 
-	// Get OS information to filter download type i.e linux / darwin
 	uname := getOSInfo()
-
 	// Compare system name to set value for building url to download kubectl binary
 	if uname.Sysname != "Linux" && uname.Sysname != "Darwin" {
 		log.Fatalf("Unsupported OS: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Sysname)
@@ -126,42 +98,29 @@ func DownloadKubectl(version string) error {
 		machine = strings.ToLower(uname.Machine)
 	}
 
-	url := "https://storage.googleapis.com/kubernetes-release/release/%v/bin/%v/%v/kubectl"
-	resp, err := http.Get(fmt.Sprintf(url, version, sys, machine))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	// Initialise WriteCounter and copy the contents of the response body to the tmp file
-	counter := &WriteCounter{}
-	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println()
-
 	// Check to make sure the file is a binary before moving the contents over to the user's home dir
-	buf, _ := ioutil.ReadFile(homeDir + "/.kubemngr/kubectl-" + version)
+	url := "https://storage.googleapis.com/kubernetes-release/release/%v/bin/%v/%v/kubectl"
+	client := getter.Client{
+		Src:              fmt.Sprintf(url, version, sys, machine),
+		Dst:              kubectl,
+		ProgressListener: defaultProgressBar,
+	}
+	fmt.Printf("Downloading %v\n", client.Src)
+	err = client.Get()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// elf - application/x-executable check
-	if !filetype.IsArchive(buf) {
-		fmt.Println("failed to download kubectl file. Are you sure you specified the right version?")
-		os.Remove(homeDir + "/.kubemngr/kubectl-" + version)
+	mime, _, err := mimetype.DetectFile(kubectl)
+	if mime != "application/octet-stream" {
+		fmt.Printf("The downloaded binary is not in the expected format. Please check the version and try again.")
+		os.Remove(kubectl)
 		os.Exit(1)
 	}
 
 	// Set executable permissions on the kubectl binary
-	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+version, 0755); err != nil {
-		log.Fatal(err)
-	}
-
-	// Rename the tmp file back to the original file and store it in the kubemngr directory
-	currentFilePath := homeDir + "/.kubemngr/kubectl-" + version
-	newFilePath := homeDir + "/.kubemngr/kubectl-" + version
-
-	err = os.Rename(currentFilePath, newFilePath)
-	if err != nil {
+	if err := os.Chmod(kubectl, 0755); err != nil {
 		log.Fatal(err)
 	}
 
