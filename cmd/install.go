@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -31,11 +32,27 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var sys, machine string
-
 // WriteCounter tracks the total number of bytes
 type WriteCounter struct {
 	Total uint64
+}
+
+func (wc *WriteCounter) Write(p []byte) (int, error) {
+	n := len(p)
+	wc.Total += uint64(n)
+	wc.PrintProgress()
+	return n, nil
+}
+
+// PrintProgress - Helper function to print progress of a download
+func (wc WriteCounter) PrintProgress() {
+	// Clear the line by using a character return to go back to the start and remove
+	// the remaining characters by filling it with spaces
+	fmt.Printf("\r%s", strings.Repeat(" ", 50))
+
+	// Return again and print current status of download
+	// We use the humanize package to print the bytes in a meaningful way (e.g. 10 MB)
+	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
 // installCmd represents the install command
@@ -78,10 +95,8 @@ func DownloadKubectl(version string) error {
 	}
 
 	// Check if current version already exists
-	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + version)
-	if err == nil {
-		log.Printf("kubectl version %s already exists", version)
-		return nil
+	if _, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + version); err == nil {
+		log.Fatalf("%s is already installed.", version)
 	}
 
 	// Create temp file of kubectl version in tmp directory
@@ -93,36 +108,29 @@ func DownloadKubectl(version string) error {
 	defer out.Close()
 
 	// Get OS information to filter download type i.e linux / darwin
-	uname := GetOSInfo()
+	uname := getOSInfo()
 
 	// Compare system name to set value for building url to download kubectl binary
-	if arrayToString(uname.Sysname) == "Linux" {
-		sys = "linux"
-	} else if arrayToString(uname.Sysname) == "Darwin" {
-		sys = "darwin"
-	} else {
-		sys = "UNKNOWN"
-		fmt.Println("Unknown system")
+	if uname.Sysname != "Linux" && uname.Sysname != "Darwin" {
+		log.Fatalf("Unsupported OS: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Sysname)
+	}
+	if uname.Machine != "arm" && uname.Machine != "arm64" && uname.Machine != "x86_64" {
+		log.Fatalf("Unsupported arch: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Machine)
 	}
 
-	if arrayToString(uname.Machine) == "arm" {
-		machine = "arm"
-	} else if arrayToString(uname.Machine) == "arm64" {
-		machine = "arm64"
-	} else if arrayToString(uname.Machine) == "x86_64" {
+	var sys = strings.ToLower(uname.Sysname)
+	var machine string
+	if uname.Machine == "x86_64" {
 		machine = "amd64"
 	} else {
-		machine = "UNKNOWN"
-		fmt.Println("Unknown machine")
+		machine = strings.ToLower(uname.Machine)
 	}
 
-	url := "https://storage.googleapis.com/kubernetes-release/release/" + version + "/bin/" + sys + "/" + machine + "/kubectl"
-
-	resp, err := http.Get(url)
+	url := "https://storage.googleapis.com/kubernetes-release/release/%v/bin/%v/%v/kubectl"
+	resp, err := http.Get(fmt.Sprintf(url, version, sys, machine))
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer resp.Body.Close()
 
 	// Initialise WriteCounter and copy the contents of the response body to the tmp file
@@ -131,8 +139,6 @@ func DownloadKubectl(version string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// The progress use the same line so print a new line once it's finished downloading
 	fmt.Println()
 
 	// Check to make sure the file is a binary before moving the contents over to the user's home dir
@@ -162,31 +168,20 @@ func DownloadKubectl(version string) error {
 	return nil
 }
 
-// GetOSInfo - Get operating system information of machine
-func GetOSInfo() unix.Utsname {
-	var uname unix.Utsname
+type uname struct {
+	Sysname string
+	Machine string
+}
 
-	if err := unix.Uname(&uname); err != nil {
+func getOSInfo() uname {
+	var utsname unix.Utsname
+
+	if err := unix.Uname(&utsname); err != nil {
 		fmt.Printf("Uname: %v", err)
 	}
 
-	return uname
-}
-
-func (wc *WriteCounter) Write(p []byte) (int, error) {
-	n := len(p)
-	wc.Total += uint64(n)
-	wc.PrintProgress()
-	return n, nil
-}
-
-// PrintProgress - Helper function to print progress of a download
-func (wc WriteCounter) PrintProgress() {
-	// Clear the line by using a character return to go back to the start and remove
-	// the remaining characters by filling it with spaces
-	fmt.Printf("\r%s", strings.Repeat(" ", 50))
-
-	// Return again and print current status of download
-	// We use the humanize package to print the bytes in a meaningful way (e.g. 10 MB)
-	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
+	return uname{
+		Sysname: string(bytes.Trim(utsname.Sysname[:], "\x00")),
+		Machine: string(bytes.Trim(utsname.Machine[:], "\x00")),
+	}
 }
