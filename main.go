@@ -23,7 +23,7 @@ import (
 	"github.com/zee-ahmed/kubemngr/cmd"
 )
 
-var clientVersion = "0.1.0"
+var clientVersion = "0.1.3"
 
 func main() {
 
