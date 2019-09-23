@@ -116,7 +116,7 @@ func DownloadKubectl(version string) error {
 
 	// elf - application/x-executable check
 	mime, _, err := mimetype.DetectFile(kubectl)
-	if mime != "application/octet-stream" {
+	if mime != "application/octet-stream" && mime != "application/x-executable" {
 		fmt.Printf("The downloaded binary is not in the expected format. Please check the version and try again.")
 		os.Remove(kubectl)
 		os.Exit(1)
