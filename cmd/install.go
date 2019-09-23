@@ -17,26 +17,17 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
-	"github.com/dustin/go-humanize"
-	"github.com/h2non/filetype"
+	"github.com/gabriel-vasile/mimetype"
+	getter "github.com/hashicorp/go-getter"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 )
-
-var sys, machine string
-
-// WriteCounter tracks the total number of bytes
-type WriteCounter struct {
-	Total uint64
-}
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
@@ -76,117 +67,83 @@ func DownloadKubectl(version string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	kubectl := fmt.Sprintf("%v/.kubemngr/kubectl-%v", homeDir, version)
 
 	// Check if current version already exists
-	_, err = os.Stat(homeDir + "/.kubemngr/kubectl-" + version)
-	if err == nil {
-		log.Printf("kubectl version %s already exists", version)
-		return nil
+	if _, err = os.Stat(kubectl); err == nil {
+		fmt.Printf("%s is already installed.", version)
+		os.Exit(0)
 	}
 
 	// Create temp file of kubectl version in tmp directory
-	out, err := os.Create(homeDir + "/.kubemngr/kubectl-" + version)
+	out, err := os.Create(kubectl)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer out.Close()
 
-	// Get OS information to filter download type i.e linux / darwin
-	uname := GetOSInfo()
-
+	uname := getOSInfo()
 	// Compare system name to set value for building url to download kubectl binary
-	if arrayToString(uname.Sysname) == "Linux" {
-		sys = "linux"
-	} else if arrayToString(uname.Sysname) == "Darwin" {
-		sys = "darwin"
-	} else {
-		sys = "UNKNOWN"
-		fmt.Println("Unknown system")
+	if uname.Sysname != "Linux" && uname.Sysname != "Darwin" {
+		fmt.Printf("Unsupported OS: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Sysname)
+		os.Exit(0)
+	}
+	if uname.Machine != "arm" && uname.Machine != "arm64" && uname.Machine != "x86_64" {
+		fmt.Printf("Unsupported arch: %s\nCheck github.com/zee-ahmed/kubemngr for issues.", uname.Machine)
+		os.Exit(0)
 	}
 
-	if arrayToString(uname.Machine) == "arm" {
-		machine = "arm"
-	} else if arrayToString(uname.Machine) == "arm64" {
-		machine = "arm64"
-	} else if arrayToString(uname.Machine) == "x86_64" {
+	var sys = strings.ToLower(uname.Sysname)
+	var machine string
+	if uname.Machine == "x86_64" {
 		machine = "amd64"
 	} else {
-		machine = "UNKNOWN"
-		fmt.Println("Unknown machine")
+		machine = strings.ToLower(uname.Machine)
 	}
-
-	url := "https://storage.googleapis.com/kubernetes-release/release/" + version + "/bin/" + sys + "/" + machine + "/kubectl"
-
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-
-	// Initialise WriteCounter and copy the contents of the response body to the tmp file
-	counter := &WriteCounter{}
-	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// The progress use the same line so print a new line once it's finished downloading
-	fmt.Println()
 
 	// Check to make sure the file is a binary before moving the contents over to the user's home dir
-	buf, _ := ioutil.ReadFile(homeDir + "/.kubemngr/kubectl-" + version)
+	url := "https://storage.googleapis.com/kubernetes-release/release/%v/bin/%v/%v/kubectl"
+	client := getter.Client{
+		Src:              fmt.Sprintf(url, version, sys, machine),
+		Dst:              kubectl,
+		ProgressListener: defaultProgressBar,
+	}
+	fmt.Printf("Downloading %v\n", client.Src)
+	err = client.Get()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// elf - application/x-executable check
-	if !filetype.IsArchive(buf) {
-		fmt.Println("failed to download kubectl file. Are you sure you specified the right version?")
-		os.Remove(homeDir + "/.kubemngr/kubectl-" + version)
+	mime, _, err := mimetype.DetectFile(kubectl)
+	if mime != "application/octet-stream" && mime != "application/x-executable" {
+		fmt.Printf("The downloaded binary is not in the expected format. Please check the version and try again.")
+		os.Remove(kubectl)
 		os.Exit(1)
 	}
 
 	// Set executable permissions on the kubectl binary
-	if err := os.Chmod(homeDir+"/.kubemngr/kubectl-"+version, 0755); err != nil {
-		log.Fatal(err)
-	}
-
-	// Rename the tmp file back to the original file and store it in the kubemngr directory
-	currentFilePath := homeDir + "/.kubemngr/kubectl-" + version
-	newFilePath := homeDir + "/.kubemngr/kubectl-" + version
-
-	err = os.Rename(currentFilePath, newFilePath)
-	if err != nil {
+	if err := os.Chmod(kubectl, 0755); err != nil {
 		log.Fatal(err)
 	}
 
 	return nil
 }
 
-// GetOSInfo - Get operating system information of machine
-func GetOSInfo() unix.Utsname {
-	var uname unix.Utsname
+type uname struct {
+	Sysname string
+	Machine string
+}
 
-	if err := unix.Uname(&uname); err != nil {
+func getOSInfo() uname {
+	var utsname unix.Utsname
+
+	if err := unix.Uname(&utsname); err != nil {
 		fmt.Printf("Uname: %v", err)
 	}
 
-	return uname
-}
-
-func (wc *WriteCounter) Write(p []byte) (int, error) {
-	n := len(p)
-	wc.Total += uint64(n)
-	wc.PrintProgress()
-	return n, nil
-}
-
-// PrintProgress - Helper function to print progress of a download
-func (wc WriteCounter) PrintProgress() {
-	// Clear the line by using a character return to go back to the start and remove
-	// the remaining characters by filling it with spaces
-	fmt.Printf("\r%s", strings.Repeat(" ", 50))
-
-	// Return again and print current status of download
-	// We use the humanize package to print the bytes in a meaningful way (e.g. 10 MB)
-	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
+	return uname{
+		Sysname: string(bytes.Trim(utsname.Sysname[:], "\x00")),
+		Machine: string(bytes.Trim(utsname.Machine[:], "\x00")),
+	}
 }
