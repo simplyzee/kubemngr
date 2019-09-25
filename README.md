@@ -22,13 +22,13 @@ This tool was written based on this experience and for learning opportunities/ex
 bash:
 
 ```bash
-echo 'export PATH="$HOME/.bin:$PATH"' >> ~/.bashrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
 
 zsh:
 
 ```bash
-echo 'export PATH="$HOME/.bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 ```
 
 2. via Go:
