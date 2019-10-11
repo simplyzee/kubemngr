@@ -19,14 +19,29 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/zee-ahmed/kubemngr/cmd"
 )
 
-var clientVersion = "0.1.2"
+var (
+	clientVersion = "0.1.2"
+	usrLocalBin   = "/usr/local/bin"
+)
+
+type paths []string
+
+func (p paths) indexOf(element string) int {
+	for k, v := range p {
+		if element == v {
+			return k
+		}
+	}
+	return -1 //not found.
+}
 
 func main() {
-
+	// set kubemngr directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
@@ -34,9 +49,33 @@ func main() {
 
 	directory := homeDir + "/.kubemngr"
 	createDirectory(directory)
-
 	binDirectory := homeDir + "/.local/bin"
 	createDirectory(binDirectory)
+
+	path, exists := os.LookupEnv("PATH")
+	if !exists {
+		log.Fatal("Can't access environment variable: PATH")
+	}
+
+	var paths paths = strings.Split(path, ":")
+	pathsBeforeUsrLocalBin := paths[:paths.indexOf(usrLocalBin)]
+	if pathsBeforeUsrLocalBin.indexOf(binDirectory) < 0 {
+		fmt.Printf("PATH does not give precedent to %v/.local/bin. kubectl will be executed from /usr/local/bin unless PATH is amended.\n\n", homeDir)
+
+		shell, exists := os.LookupEnv("SHELL")
+		if !exists || shell != "/bin/zsh" && shell != "/bin/bash" {
+			os.Exit(0)
+		}
+
+		fmt.Printf("\tDetected shell is %v, suggested amendment:\n\t", shell)
+		if shell == "/bin/zsh" {
+			fmt.Println(`echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc`)
+		} else if shell == "/bin/bash" {
+			fmt.Println(`echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc`)
+		}
+
+		os.Exit(0)
+	}
 
 	cmd.Execute(clientVersion)
 }

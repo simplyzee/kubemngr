@@ -41,7 +41,6 @@ func init() {
 
 // UseKubectlBinary - sets kubectl to the version specified
 func UseKubectlBinary(version string) error {
-
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
