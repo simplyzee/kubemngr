@@ -1,6 +1,6 @@
 # kubemngr
 
-[![Releases](https://img.shields.io/github/release/zee-ahmed/kubemngr.svg?style=flat-square)](https://github.com/zee-ahmed/kubemngr/releases/latest) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](/LICENSE) <!-- [![SayThanks.io]()] --> [![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg?style=flat-square)](https://github.com/goreleaser)[![Travis](https://img.shields.io/travis/zee-ahmed/kubemngr/master.svg?style=flat-square)](https://travis-ci.org/zee-ahmed/kubemngr)
+[![Releases](https://img.shields.io/github/release/zee-ahmed/kubemngr.svg?style=flat-square)](https://github.com/zee-ahmed/kubemngr/releases/latest) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](/LICENSE) <!-- [![SayThanks.io]()] --> [![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg?style=flat-square)](https://github.com/goreleaser) [![Travis](https://img.shields.io/travis/zee-ahmed/kubemngr/master.svg?style=flat-square)](https://travis-ci.org/zee-ahmed/kubemngr)
 
 ## Introduction
 
@@ -17,8 +17,21 @@ This tool was written based on this experience and for learning opportunities/ex
 
 ## Install
 
-via Go:
+1. Add `~/.local/bin` to your `$PATH`
 
+bash:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
+
+zsh:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+```
+
+2. via Go:
 ```
 go get -u github.com/zee-ahmed/kubemngr
 ```
