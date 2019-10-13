@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +42,6 @@ func init() {
 
 // UseKubectlBinary - sets kubectl to the version specified
 func UseKubectlBinary(version string) error {
-
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
@@ -52,8 +52,21 @@ func UseKubectlBinary(version string) error {
 
 	_, err = os.Stat(kubectlVersion)
 	if os.IsNotExist(err) {
-		log.Printf("kubectl %s does not exist", version)
-		os.Exit(1)
+		prompt := promptui.Prompt{
+			// no idea why sprintf doesn't work
+			Label:     fmt.Sprintf("kubectl %s is not installed. Install now", version),
+			IsConfirm: true,
+			Default:   "y",
+		}
+		_, err := prompt.Run()
+		if err != nil {
+			os.Exit(0)
+		}
+
+		err = DownloadKubectl(version)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if _, err := os.Lstat(kubectlLink); err == nil {
