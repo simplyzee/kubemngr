@@ -35,9 +35,11 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 ```
 go get -u github.com/zee-ahmed/kubemngr
 ```
+
 It can also be installed by downloading the binary from the Github release page [Github Releases](https://github.com/zee-ahmed/kubemngr/releases)
 
 ## Usage
+
 ```bash
 > kubemngr --help
 This tool is to help developers run different versions of kubectl within their workspace and to support working
@@ -56,7 +58,6 @@ Available Commands:
 
 Flags:
   -h, --help     help for kubemngr
-  -t, --toggle   Help message for toggle
 
 Use "kubemngr [command] --help" for more information about a command.
 ```
