@@ -53,7 +53,6 @@ func UseKubectlBinary(version string) error {
 	_, err = os.Stat(kubectlVersion)
 	if os.IsNotExist(err) {
 		prompt := promptui.Prompt{
-			// no idea why sprintf doesn't work
 			Label:     fmt.Sprintf("kubectl %s is not installed. Install now", version),
 			IsConfirm: true,
 			Default:   "y",
