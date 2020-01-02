@@ -109,3 +109,4 @@ fabric.properties
 .idea/sonarlint
 
 # End of https://www.gitignore.io/api/go,jetbrains
+__debug_bin
