@@ -1,6 +1,6 @@
 module github.com/zee-ahmed/kubemngr
 
-go 1.12
+go 1.13
 
 require (
 	github.com/cheggaaa/pb v1.0.27
@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/manifoldco/promptui v0.3.2
+	github.com/manifoldco/promptui v0.6.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
